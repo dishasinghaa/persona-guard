@@ -2,7 +2,7 @@
 
 An early-warning guard for local AI. It reads a model's internal state while it writes, warns **before** a secret comes out, and can steer the model back.
 
-Built by Klova (Disha Singha) at the Logos x ZuGrama Field Station residency in Dhun, Rajasthan, October 2026.
+Built by klova:)(me) at the Logos x ZuGrama Field Station residency in Dhun, Rajasthan, October 2026.
 
 ## The problem
 
