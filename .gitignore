@@ -1,0 +1,6 @@
+data/resident_secrets.json
+*.env
+__pycache__/
+recorder_sessions*.json
+rec*.json
+data/sessions.json
