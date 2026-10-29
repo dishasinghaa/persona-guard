@@ -91,9 +91,33 @@ $("riskBar").style.width=(vals[idx].risk*100)+"%";$("trustBar").style.width=(val
 document.querySelectorAll("nav button").forEach(b=>b.addEventListener("click",()=>{document.querySelectorAll("nav button").forEach(x=>x.classList.remove("active"));b.classList.add("active");document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));$("page-"+b.dataset.page).classList.add("active");if(b.dataset.page==="frontier")drawChart("frontierChart2")}));
 ["scenarioSelect","armSelect","rolloutSelect","tokenSlider"].forEach(id=>$(id).addEventListener("input",renderReplay));$("method").addEventListener("change",()=>{drawChart("frontierChart");drawChart("frontierChart2")});$("axis").addEventListener("change",()=>{drawChart("frontierChart");drawChart("frontierChart2")});$("updateView").addEventListener("click",()=>{$("viewToast").textContent=(DATA.is_mock?"Chart updated from the loaded dataset. Values remain synthetic until real runs are loaded.":"Chart updated from the loaded measured dataset.");drawChart("frontierChart");drawChart("frontierChart2")});
 $("fileInput").addEventListener("change",async e=>{let f=e.target.files[0];if(!f)return;try{let d=JSON.parse(await f.text());if(!Array.isArray(d.sessions)||!d.cal||!Array.isArray(d.utility_evaluations))throw Error("Required fields missing");DATA=d;$("settingsToast").textContent="Loaded "+d.sessions.length+" sessions. Check the provenance banner.";render()}catch(err){$("settingsToast").textContent="Could not load JSON: "+err.message}});
-$("reloadMock").addEventListener("click",async()=>{try{const r=await fetch("../data/sessions.json");if(!r.ok)throw Error("Open via local server to reload bundled data.");DATA=await r.json();$("settingsToast").textContent="Bundled sample data reloaded.";render()}catch(e){$("settingsToast").textContent="Bundled reload needs the project server; refresh this page or load sessions.json manually."}});
-async function init(){try{const r=await fetch("../data/sessions.json");if(!r.ok)throw Error();DATA=await r.json()}catch(e){$("settingsToast")&&($("settingsToast").textContent="Could not auto-load data. Use Settings to load data/sessions.json.");}if(DATA)render()}
-const cloudEndpoint=$('cloudEndpoint');
+$("reloadMock").addEventListener("click",async()=>{
+  try {
+    const r = await fetch("./data/sessions_public.json");
+    if (!r.ok) throw Error("Could not load public session data.");
+    DATA = await r.json();
+    $("settingsToast").textContent = "Bundled sample data reloaded.";
+    render();
+  } catch(e) {
+    $("settingsToast").textContent = "Could not reload sample data: " + e.message;
+  }
+});
+async function init() {
+  try {
+    const r = await fetch("./data/sessions_public.json");
+    if (!r.ok) throw Error("HTTP " + r.status);
+    DATA = await r.json();
+    $("settingsToast") &&
+      ($("settingsToast").textContent = "Dashboard data loaded successfully.");
+  } catch (e) {
+    console.error("Persona-Guard data loading failed:", e);
+    $("settingsToast") &&
+      ($("settingsToast").textContent =
+        "Could not load dashboard data. Check the deployed data file.");
+  }
+
+  if (DATA) render();
+}
 $('checkCloud').addEventListener('click',async()=>{const raw=cloudEndpoint.value.trim();if(!raw){$('cloudStatus').textContent='Enter your deployed runner URL first. No request was sent.';return;}let url;try{url=new URL(raw);if(!['https:','http:'].includes(url.protocol))throw Error();}catch(e){$('cloudStatus').textContent='Please enter a valid http(s) endpoint URL.';return;}if(location.protocol==='https:'&&url.protocol==='http:'){$('cloudStatus').textContent='Use HTTPS for the runner endpoint when this page is hosted over HTTPS.';return;}$('cloudStatus').textContent='Checking /health …';try{const r=await fetch(url.origin+url.pathname.replace(/\/$/,'')+'/health',{method:'GET',headers:{'Accept':'application/json'}});if(!r.ok)throw Error('HTTP '+r.status);const j=await r.json();$('cloudStatus').textContent='Connected: '+JSON.stringify(j)+' · This only checks health; it does not run a model.';}catch(e){$('cloudStatus').textContent='Connection failed: '+e.message+'. Check the URL, deployment status, CORS, and HTTPS. No model was run.';}});
 
 function liveSet(raw){
